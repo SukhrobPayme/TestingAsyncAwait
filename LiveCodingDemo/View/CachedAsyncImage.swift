@@ -6,18 +6,21 @@
 //
 
 import SwiftUI
+import Combine
 
-struct CachedAsyncImage<Content: View>: View {
+struct CachedAsyncImage<Content: View, Loader: ImageLoaderProtocol>: View {
     private let urlString: String
     private let content: (UIImage?) -> Content
 
-    @StateObject private var loader = DefaultImageLoader()
+    @StateObject private var loader: Loader
 
     init(
         urlString: String,
+        loader: Loader = DefaultImageLoader(),
         @ViewBuilder content: @escaping (UIImage?) -> Content
     ) {
         self.urlString = urlString
+        self._loader = StateObject(wrappedValue: loader)
         self.content = content
     }
 

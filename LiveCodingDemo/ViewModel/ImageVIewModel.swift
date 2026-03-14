@@ -15,7 +15,6 @@ final class ImageViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     
     private let manager: NetworkManager = DefaultNetworkManager()
-    private let cacheManager: NetworkManager = DefaultNetworkManager()
     private let urlOptional = URL(string: "https://randomuser.me/api/?results=50")
     
     func onLoad() async {
