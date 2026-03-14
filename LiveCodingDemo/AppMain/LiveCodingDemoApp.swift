@@ -11,7 +11,7 @@ import SwiftUI
 struct LiveCodingDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView(viewModel: ImageViewModel())
+            ContentView(viewModel: ImageViewModel(networkManager: DefaultNetworkManager()))
         }
     }
 }

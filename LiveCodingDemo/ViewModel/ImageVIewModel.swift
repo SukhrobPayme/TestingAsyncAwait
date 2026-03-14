@@ -10,25 +10,29 @@ import SwiftUI
 
 @MainActor
 final class ImageViewModel: ObservableObject {
-    @Published var dataArray: UsersResponseDTO? = nil
+    @Published var users: UsersResponseDTO? = nil
     @Published var error: String? = nil
     @Published var isLoading: Bool = false
     
-    private let manager: NetworkManager = DefaultNetworkManager()
-    private let urlOptional = URL(string: "https://randomuser.me/api/?results=50")
+    private let networkManager: NetworkManager
+    private let url = URL(string: "https://randomuser.me/api/?results=50")
     
-    func onLoad() async {
-        await fetchData(urlOptional)
+    init(networkManager: NetworkManager) {
+        self.networkManager = networkManager
     }
     
-    func fetchData(_ url: URL?) async {
+    func fetchData() async {
+        isLoading = true
+        defer { isLoading = false }
+        
         do {
-            guard let url else { throw URLError(.badURL) }
-            try Task.checkCancellation()
-            dataArray = try await manager.fetch(url)
+            guard let url else { return }
+            self.error = nil
+            users = try await networkManager.fetch(url)
         } catch {
-            debugPrint(error.localizedDescription)
             self.error = error.localizedDescription
         }
     }
 }
+
+

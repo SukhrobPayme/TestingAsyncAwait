@@ -9,50 +9,58 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject var viewModel: ImageViewModel
-
+    
     var body: some View {
-        NavigationView {
-            List(viewModel.dataArray?.users ?? [], id: \.self, rowContent: { model in
-                VStack {
-                    imageRow(model: model)
+        NavigationStack {
+            List(viewModel.users?.users ?? [], id: \.self) { model in
+                NavigationLink {
+                    userProfile(model)
+                } label: {
+                    userRow(model)
                 }
-            })
-            .navigationTitle("Downloading Image")
+
+
+            }
             .task {
-                await viewModel.onLoad()
+                await viewModel.fetchData()
             }
             .refreshable {
-                await viewModel.onLoad()
+                await viewModel.fetchData()
             }
         }
     }
     
-    private func imageRow(model: UserDTO) -> some View {
+    private func userRow(_ model: UserDTO) -> some View {
         HStack {
-            CachedAsyncImage(urlString: model.picture.medium) { image in
-                if let image {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 75, height: 75)
-                        .clipped()
-                        .cornerRadius(6)
-                } else {
-                    Color.gray.opacity(0.15)
-                        .frame(width: 75, height: 75)
-                        .cornerRadius(6)
-                }
-            }
-
+            CachedAsyncImage(content: { image in
+                image
+                    .resizable()
+                    .clipShape(Circle())
+                    .frame(width: 75, height: 75, alignment: .leading)
+                    .clipped()
+            }, urlString: model.picture.medium)
             VStack(alignment: .leading) {
-                Text(model.name.first).font(.headline)
-                Text(model.email).foregroundStyle(.gray).italic()
+                Text(model.name.first)
+                Text(model.email)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+    
+    private func userProfile(_ model: UserDTO) -> some View {
+        VStack {
+            CachedAsyncImage(content: { image in
+                image
+                    .resizable()
+                    .clipShape(Circle())
+                    .frame(width: 275, height: 275, alignment: .leading)
+                    .clipped()
+            }, urlString: model.picture.medium)
+            Text(model.name.first + " " + model.name.last)
+            Text(model.email)
         }
     }
 }
 
 #Preview {
-    ContentView(viewModel: ImageViewModel())
+    ContentView(viewModel: ImageViewModel(networkManager: DefaultNetworkManager()))
 }

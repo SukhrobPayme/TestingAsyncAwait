@@ -6,33 +6,36 @@
 //
 
 import SwiftUI
-import Combine
 
-struct CachedAsyncImage<Content: View, Loader: ImageLoaderProtocol>: View {
+struct CachedAsyncImage<Content: View>: View {
+    @StateObject private var imageLoader = DefaultImageLoader()
+    
+    private let content: (Image) -> Content
     private let urlString: String
-    private let content: (UIImage?) -> Content
-
-    @StateObject private var loader: Loader
-
+    
     init(
-        urlString: String,
-        loader: Loader = DefaultImageLoader(),
-        @ViewBuilder content: @escaping (UIImage?) -> Content
+        content: @escaping (Image) -> Content,
+        urlString: String
     ) {
-        self.urlString = urlString
-        self._loader = StateObject(wrappedValue: loader)
         self.content = content
+        self.urlString = urlString
     }
-
+    
     var body: some View {
         ZStack {
-            content(loader.image)
-
-            if loader.isLoading {
+            if let image = imageLoader.image {
+                content(Image(uiImage: image))
+            }
+            
+            if imageLoader.isLoading {
                 ProgressView()
             }
         }
-        .task { loader.load(from: urlString) }
-        .onDisappear { loader.cancel() }
+        .task {
+            imageLoader.loadFrom(urlString)
+        }
+        .onDisappear {
+            imageLoader.cancel()
+        }
     }
 }

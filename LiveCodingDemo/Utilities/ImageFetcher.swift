@@ -8,7 +8,7 @@
 import Foundation
 
 protocol ImageFetcher {
-    func fetch(_ url: URL) async throws -> Data
+    func fetchData(_ url: URL) async throws -> Data
 }
 
 final class DefaultImageFetcher: ImageFetcher {
@@ -18,8 +18,7 @@ final class DefaultImageFetcher: ImageFetcher {
         self.urlSession = urlSession
     }
     
-    
-    func fetch(_ url: URL) async throws -> Data {
+    func fetchData(_ url: URL) async throws -> Data {
         let (data, response) = try await urlSession.data(from: url)
         
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -29,17 +28,14 @@ final class DefaultImageFetcher: ImageFetcher {
         guard 200..<300 ~= httpResponse.statusCode else {
             switch httpResponse.statusCode {
             case 400...499:
-                throw NetworkError.internal(errorCode: httpResponse.statusCode)
+                throw NetworkError.internal(error: httpResponse.statusCode)
             case 500...599:
-                throw NetworkError.server(errorCode: httpResponse.statusCode)
+                throw NetworkError.server(error: httpResponse.statusCode)
             default:
-                throw NetworkError.unknown(errorCode: httpResponse.statusCode)
+                throw NetworkError.unknown(error: httpResponse.statusCode)
             }
         }
         
         return data
     }
-    
-    
 }
-

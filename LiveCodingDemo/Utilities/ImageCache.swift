@@ -8,8 +8,8 @@
 import SwiftUI
 
 protocol ImageCache {
-    func get(key: String) -> UIImage?
-    func set(key: String, image: UIImage)
+    func set(image: UIImage, name: String)
+    func get(name: String) -> UIImage?
 }
 
 final class DefaultImageCache: ImageCache {
@@ -20,16 +20,16 @@ final class DefaultImageCache: ImageCache {
     private var cache: NSCache<NSString, UIImage> = {
         let cache = NSCache<NSString, UIImage>()
         cache.countLimit = 100
-        cache.totalCostLimit = 1024 * 1024 * 10
+        cache.totalCostLimit = 1024 * 1024 * 200 // 200mb
         return cache
     }()
     
-    func get(key: String) -> UIImage? {
-        print("Get from Saved")
-        return cache.object(forKey: key as NSString)
+    func set(image: UIImage, name: String) {
+        cache.setObject(image, forKey: name as NSString)
     }
     
-    func set(key: String, image: UIImage) {
-        cache.setObject(image, forKey: key as NSString)
+    func get(name: String) -> UIImage? {
+        cache.object(forKey: name as NSString)
     }
 }
+

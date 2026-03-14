@@ -8,23 +8,23 @@
 import SwiftUI
 import Combine
 
-protocol ImageLoaderProtocol: ObservableObject {
+protocol ImageLoader: ObservableObject {
     var image: UIImage? { get }
     var isLoading: Bool { get }
-    func load(from urlString: String)
+    func loadFrom(_ urlString: String)
     func cancel()
 }
 
 @MainActor
-final class DefaultImageLoader: ImageLoaderProtocol {
+final class DefaultImageLoader: ImageLoader {
     @Published private(set) var image: UIImage? = nil
     @Published private(set) var isLoading: Bool = false
-
+    
     private let cache: ImageCache
     private let fetcher: ImageFetcher
-
+    
     private var task: Task<Void, Never>?
-
+    
     init(
         cache: ImageCache = DefaultImageCache.shared,
         fetcher: ImageFetcher = DefaultImageFetcher()
@@ -32,29 +32,28 @@ final class DefaultImageLoader: ImageLoaderProtocol {
         self.cache = cache
         self.fetcher = fetcher
     }
-
-    func load(from urlString: String) {
-        if let cached = cache.get(key: urlString) {
-            self.image = cached
-            return
+    
+    func loadFrom(_ urlString: String) {
+        if let image = cache.get(name: urlString) {
+            self.image = image
         }
-
+        
         task?.cancel()
         task = Task {
             isLoading = true
             defer { isLoading = false }
-
+            
             guard
                 let url = URL(string: urlString),
-                let data = try? await fetcher.fetch(url),
-                let uiImage = UIImage(data: data),
+                let data = try? await fetcher.fetchData(url),
+                let image = UIImage(data: data),
                 !Task.isCancelled
             else { return }
-            cache.set(key: urlString, image: uiImage)
-            self.image = uiImage
+            cache.set(image: image, name: urlString)
+            self.image = image
         }
     }
-
+    
     func cancel() {
         task?.cancel()
         task = nil
